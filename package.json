@@ -1,6 +1,6 @@
 {
   "name": "iobroker.border-router",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "OpenThread Border Router in Docker, managed from ioBroker: Thread network for Matter devices",
   "author": "bluefox <dogafox@gmail.com>",
   "contributors": [

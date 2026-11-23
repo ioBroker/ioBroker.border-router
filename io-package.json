@@ -1,324 +1,348 @@
 {
-    "common": {
-        "name": "border-router",
-        "version": "0.0.1",
-        "news": {
-            "0.0.1": {
-                "en": "Initial release: OpenThread Border Router in Docker, Thread network for ioBroker.matter",
-                "de": "Erste Version: OpenThread Border Router in Docker, Thread-Netzwerk für ioBroker.matter",
-                "ru": "Первая версия: OpenThread Border Router в Docker, сеть Thread для ioBroker.matter",
-                "pt": "Primeira versão: OpenThread Border Router no Docker, rede Thread para o ioBroker.matter",
-                "nl": "Eerste versie: OpenThread Border Router in Docker, Thread-netwerk voor ioBroker.matter",
-                "fr": "Première version : OpenThread Border Router dans Docker, réseau Thread pour ioBroker.matter",
-                "it": "Prima versione: OpenThread Border Router in Docker, rete Thread per ioBroker.matter",
-                "es": "Primera versión: OpenThread Border Router en Docker, red Thread para ioBroker.matter",
-                "pl": "Pierwsza wersja: OpenThread Border Router w Dockerze, sieć Thread dla ioBroker.matter",
-                "uk": "Перша версія: OpenThread Border Router у Docker, мережа Thread для ioBroker.matter",
-                "zh-cn": "首个版本：在 Docker 中运行 OpenThread Border Router，为 ioBroker.matter 提供 Thread 网络"
-            }
-        },
-        "titleLang": {
-            "en": "Thread Border Router (OpenThread)",
-            "de": "Thread Border Router (OpenThread)",
-            "ru": "Пограничный маршрутизатор Thread (OpenThread)",
-            "pt": "Roteador de borda Thread (OpenThread)",
-            "nl": "Thread Border Router (OpenThread)",
-            "fr": "Routeur de bordure Thread (OpenThread)",
-            "it": "Border router Thread (OpenThread)",
-            "es": "Router de borde Thread (OpenThread)",
-            "pl": "Router brzegowy Thread (OpenThread)",
-            "uk": "Прикордонний маршрутизатор Thread (OpenThread)",
-            "zh-cn": "Thread 边界路由器 (OpenThread)"
-        },
-        "desc": {
-            "en": "Runs the OpenThread Border Router in Docker with a USB stick and hands the Thread network to ioBroker.matter",
-            "de": "Startet den OpenThread Border Router in Docker mit einem USB-Stick und übergibt das Thread-Netzwerk an ioBroker.matter",
-            "ru": "Запускает OpenThread Border Router в Docker с USB-стиком и передаёт сеть Thread в ioBroker.matter",
-            "pt": "Executa o OpenThread Border Router no Docker com um stick USB e entrega a rede Thread ao ioBroker.matter",
-            "nl": "Draait de OpenThread Border Router in Docker met een USB-stick en geeft het Thread-netwerk door aan ioBroker.matter",
-            "fr": "Exécute l'OpenThread Border Router dans Docker avec une clé USB et transmet le réseau Thread à ioBroker.matter",
-            "it": "Esegue l'OpenThread Border Router in Docker con una chiavetta USB e passa la rete Thread a ioBroker.matter",
-            "es": "Ejecuta el OpenThread Border Router en Docker con un stick USB y entrega la red Thread a ioBroker.matter",
-            "pl": "Uruchamia OpenThread Border Router w Dockerze z modułem USB i przekazuje sieć Thread do ioBroker.matter",
-            "uk": "Запускає OpenThread Border Router у Docker з USB-стиком і передає мережу Thread до ioBroker.matter",
-            "zh-cn": "在 Docker 中使用 USB 适配器运行 OpenThread Border Router，并将 Thread 网络交给 ioBroker.matter"
-        },
-        "authors": ["bluefox <dogafox@gmail.com>"],
-        "keywords": ["thread", "openthread", "otbr", "border router", "matter", "docker"],
-        "licenseInformation": {
-            "type": "free",
-            "license": "MIT"
-        },
-        "platform": "Javascript/Node.js",
-        "mode": "daemon",
-        "loglevel": "info",
-        "icon": "border-router.svg",
-        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.border-router/main/admin/border-router.svg",
-        "readme": "https://github.com/ioBroker/ioBroker.border-router/blob/main/README.md",
-        "enabled": true,
-        "compact": true,
-        "messagebox": true,
-        "stopBeforeUpdate": true,
-        "type": "hardware",
-        "connectionType": "local",
-        "dataSource": "poll",
-        "tier": 2,
-        "adminUI": {
-            "config": "json"
-        },
-        "eraseOnUpload": true,
-        "stopTimeout": 10000,
-        "plugins": {
-            "docker": {
-                "iobDockerComposeFiles": ["docker-compose.yaml"]
-            }
-        },
-        "dependencies": [
-            {
-                "js-controller": ">=7.0.0"
-            }
-        ],
-        "globalDependencies": [
-            {
-                "admin": ">=8.0.0"
-            }
+  "common": {
+    "name": "border-router",
+    "version": "0.0.2",
+    "news": {
+      "0.0.2": {
+        "en": "The package is published by GitHub Actions with npm provenance",
+        "de": "Das Paket stammt von GitHub Actions mit npm",
+        "ru": "Пакет опубликован GitHub Actions с именем npm provenance",
+        "pt": "O pacote é publicado pelo GitHub Actions com origem npm",
+        "nl": "Het pakket is uitgegeven door GitHub Actions met npm provenance",
+        "fr": "Le package est publié par GitHub Actions avec npm provenance",
+        "it": "Il pacchetto è pubblicato da GitHub Actions con npm",
+        "es": "El paquete lo publica GitHub Actions con procedencia npm",
+        "pl": "Pakiet został opublikowany przez GitHub Actions z pochodzeniem npm",
+        "uk": "Пакет опублікований GitHub Actions з походженням npm",
+        "zh-cn": "该包由 GitHub Actions 发布，来源为 npm"
+      },
+      "0.0.1": {
+        "en": "Initial release: OpenThread Border Router in Docker, Thread network for ioBroker.matter",
+        "de": "Erste Version: OpenThread Border Router in Docker, Thread-Netzwerk für ioBroker.matter",
+        "ru": "Первая версия: OpenThread Border Router в Docker, сеть Thread для ioBroker.matter",
+        "pt": "Primeira versão: OpenThread Border Router no Docker, rede Thread para o ioBroker.matter",
+        "nl": "Eerste versie: OpenThread Border Router in Docker, Thread-netwerk voor ioBroker.matter",
+        "fr": "Première version : OpenThread Border Router dans Docker, réseau Thread pour ioBroker.matter",
+        "it": "Prima versione: OpenThread Border Router in Docker, rete Thread per ioBroker.matter",
+        "es": "Primera versión: OpenThread Border Router en Docker, red Thread para ioBroker.matter",
+        "pl": "Pierwsza wersja: OpenThread Border Router w Dockerze, sieć Thread dla ioBroker.matter",
+        "uk": "Перша версія: OpenThread Border Router у Docker, мережа Thread для ioBroker.matter",
+        "zh-cn": "首个版本：在 Docker 中运行 OpenThread Border Router，为 ioBroker.matter 提供 Thread 网络"
+      }
+    },
+    "titleLang": {
+      "en": "Thread Border Router (OpenThread)",
+      "de": "Thread Border Router (OpenThread)",
+      "ru": "Пограничный маршрутизатор Thread (OpenThread)",
+      "pt": "Roteador de borda Thread (OpenThread)",
+      "nl": "Thread Border Router (OpenThread)",
+      "fr": "Routeur de bordure Thread (OpenThread)",
+      "it": "Border router Thread (OpenThread)",
+      "es": "Router de borde Thread (OpenThread)",
+      "pl": "Router brzegowy Thread (OpenThread)",
+      "uk": "Прикордонний маршрутизатор Thread (OpenThread)",
+      "zh-cn": "Thread 边界路由器 (OpenThread)"
+    },
+    "desc": {
+      "en": "Runs the OpenThread Border Router in Docker with a USB stick and hands the Thread network to ioBroker.matter",
+      "de": "Startet den OpenThread Border Router in Docker mit einem USB-Stick und übergibt das Thread-Netzwerk an ioBroker.matter",
+      "ru": "Запускает OpenThread Border Router в Docker с USB-стиком и передаёт сеть Thread в ioBroker.matter",
+      "pt": "Executa o OpenThread Border Router no Docker com um stick USB e entrega a rede Thread ao ioBroker.matter",
+      "nl": "Draait de OpenThread Border Router in Docker met een USB-stick en geeft het Thread-netwerk door aan ioBroker.matter",
+      "fr": "Exécute l'OpenThread Border Router dans Docker avec une clé USB et transmet le réseau Thread à ioBroker.matter",
+      "it": "Esegue l'OpenThread Border Router in Docker con una chiavetta USB e passa la rete Thread a ioBroker.matter",
+      "es": "Ejecuta el OpenThread Border Router en Docker con un stick USB y entrega la red Thread a ioBroker.matter",
+      "pl": "Uruchamia OpenThread Border Router w Dockerze z modułem USB i przekazuje sieć Thread do ioBroker.matter",
+      "uk": "Запускає OpenThread Border Router у Docker з USB-стиком і передає мережу Thread до ioBroker.matter",
+      "zh-cn": "在 Docker 中使用 USB 适配器运行 OpenThread Border Router，并将 Thread 网络交给 ioBroker.matter"
+    },
+    "authors": [
+      "bluefox <dogafox@gmail.com>"
+    ],
+    "keywords": [
+      "thread",
+      "openthread",
+      "otbr",
+      "border router",
+      "matter",
+      "docker"
+    ],
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
+    "platform": "Javascript/Node.js",
+    "mode": "daemon",
+    "loglevel": "info",
+    "icon": "border-router.svg",
+    "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.border-router/main/admin/border-router.svg",
+    "readme": "https://github.com/ioBroker/ioBroker.border-router/blob/main/README.md",
+    "enabled": true,
+    "compact": true,
+    "messagebox": true,
+    "stopBeforeUpdate": true,
+    "type": "hardware",
+    "connectionType": "local",
+    "dataSource": "poll",
+    "tier": 2,
+    "adminUI": {
+      "config": "json"
+    },
+    "eraseOnUpload": true,
+    "stopTimeout": 10000,
+    "plugins": {
+      "docker": {
+        "iobDockerComposeFiles": [
+          "docker-compose.yaml"
         ]
+      }
     },
-    "native": {
-        "dockerEnabled": true,
-        "dockerAutoImageUpdate": false,
-        "dockerStopOnUnload": false,
-        "serialPort": "",
-        "baudRate": 460800,
-        "flowControl": "",
-        "infraInterface": "",
-        "prepareHost": true,
-        "otLogLevel": 5,
-        "restBind": "127.0.0.1",
-        "restPort": 8091,
-        "webBind": "127.0.0.1",
-        "webPort": 8092,
-        "externalUrl": "",
-        "pollInterval": 30,
-        "autoCreateNetwork": true,
-        "networkName": "",
-        "channel": 0,
-        "matterInstance": ""
-    },
-    "objects": [],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "name": "Connected to the border router (REST API)",
-                "type": "boolean",
-                "role": "indicator.connected",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.container",
-            "type": "state",
-            "common": {
-                "name": "Status of the Docker container",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false,
-                "def": ""
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.problem",
-            "type": "state",
-            "common": {
-                "name": "Current problem of the border router",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false,
-                "def": ""
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.coprocessorVersion",
-            "type": "state",
-            "common": {
-                "name": "Firmware of the stick (radio co-processor)",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false,
-                "def": ""
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.matterFingerprint",
-            "type": "state",
-            "common": {
-                "name": "SHA-256 of the dataset handed to ioBroker.matter",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false,
-                "def": ""
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread",
-            "type": "channel",
-            "common": {
-                "name": "Thread network"
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.enabled",
-            "type": "state",
-            "common": {
-                "name": "Thread network running",
-                "type": "boolean",
-                "role": "switch.enable",
-                "read": true,
-                "write": true,
-                "def": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.role",
-            "type": "state",
-            "common": {
-                "name": "Role of the border router",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false,
-                "states": {
-                    "disabled": "disabled",
-                    "detached": "detached",
-                    "child": "child",
-                    "router": "router",
-                    "leader": "leader",
-                    "unknown": "unknown"
-                },
-                "def": "unknown"
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.networkName",
-            "type": "state",
-            "common": {
-                "name": "Network name",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.channel",
-            "type": "state",
-            "common": {
-                "name": "Channel",
-                "type": "number",
-                "role": "value",
-                "min": 11,
-                "max": 26,
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.panId",
-            "type": "state",
-            "common": {
-                "name": "PAN ID",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.extPanId",
-            "type": "state",
-            "common": {
-                "name": "Extended PAN ID",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.meshLocalPrefix",
-            "type": "state",
-            "common": {
-                "name": "Mesh local prefix",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.rloc16",
-            "type": "state",
-            "common": {
-                "name": "RLOC16 of the border router",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.routers",
-            "type": "state",
-            "common": {
-                "name": "Number of routers in the network",
-                "type": "number",
-                "role": "value",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "thread.borderAgentId",
-            "type": "state",
-            "common": {
-                "name": "Border agent ID",
-                "type": "string",
-                "role": "text",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        }
+    "dependencies": [
+      {
+        "js-controller": ">=7.0.0"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=8.0.0"
+      }
     ]
+  },
+  "native": {
+    "dockerEnabled": true,
+    "dockerAutoImageUpdate": false,
+    "dockerStopOnUnload": false,
+    "serialPort": "",
+    "baudRate": 460800,
+    "flowControl": "",
+    "infraInterface": "",
+    "prepareHost": true,
+    "otLogLevel": 5,
+    "restBind": "127.0.0.1",
+    "restPort": 8091,
+    "webBind": "127.0.0.1",
+    "webPort": 8092,
+    "externalUrl": "",
+    "pollInterval": 30,
+    "autoCreateNetwork": true,
+    "networkName": "",
+    "channel": 0,
+    "matterInstance": ""
+  },
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "name": "Connected to the border router (REST API)",
+        "type": "boolean",
+        "role": "indicator.connected",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.container",
+      "type": "state",
+      "common": {
+        "name": "Status of the Docker container",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false,
+        "def": ""
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.problem",
+      "type": "state",
+      "common": {
+        "name": "Current problem of the border router",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false,
+        "def": ""
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.coprocessorVersion",
+      "type": "state",
+      "common": {
+        "name": "Firmware of the stick (radio co-processor)",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false,
+        "def": ""
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.matterFingerprint",
+      "type": "state",
+      "common": {
+        "name": "SHA-256 of the dataset handed to ioBroker.matter",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false,
+        "def": ""
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread",
+      "type": "channel",
+      "common": {
+        "name": "Thread network"
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.enabled",
+      "type": "state",
+      "common": {
+        "name": "Thread network running",
+        "type": "boolean",
+        "role": "switch.enable",
+        "read": true,
+        "write": true,
+        "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.role",
+      "type": "state",
+      "common": {
+        "name": "Role of the border router",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false,
+        "states": {
+          "disabled": "disabled",
+          "detached": "detached",
+          "child": "child",
+          "router": "router",
+          "leader": "leader",
+          "unknown": "unknown"
+        },
+        "def": "unknown"
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.networkName",
+      "type": "state",
+      "common": {
+        "name": "Network name",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.channel",
+      "type": "state",
+      "common": {
+        "name": "Channel",
+        "type": "number",
+        "role": "value",
+        "min": 11,
+        "max": 26,
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.panId",
+      "type": "state",
+      "common": {
+        "name": "PAN ID",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.extPanId",
+      "type": "state",
+      "common": {
+        "name": "Extended PAN ID",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.meshLocalPrefix",
+      "type": "state",
+      "common": {
+        "name": "Mesh local prefix",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.rloc16",
+      "type": "state",
+      "common": {
+        "name": "RLOC16 of the border router",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.routers",
+      "type": "state",
+      "common": {
+        "name": "Number of routers in the network",
+        "type": "number",
+        "role": "value",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "thread.borderAgentId",
+      "type": "state",
+      "common": {
+        "name": "Border agent ID",
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    }
+  ]
 }

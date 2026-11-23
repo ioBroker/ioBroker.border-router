@@ -137,6 +137,9 @@ credentials under the ID `border-router.0`.
 -->
 
 ## Changelog
+### 0.0.2 (2026-11-23)
+- (@GermanBluefox) The package is published by GitHub Actions with npm provenance
+
 ### 0.0.1 (2026-11-23)
 - (@GermanBluefox) Initial release
 
