@@ -1,0 +1,298 @@
+{
+    "i18n": true,
+    "type": "tabs",
+    "items": {
+        "_radio": {
+            "type": "panel",
+            "label": "Stick",
+            "items": {
+                "_radioInfo": {
+                    "type": "staticText",
+                    "xs": 12,
+                    "text": "help_radio"
+                },
+                "serialPort": {
+                    "type": "autocompleteSendTo",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 8,
+                    "command": "listSerialPorts",
+                    "freeSolo": true,
+                    "label": "Serial port of the Thread stick",
+                    "help": "help_serialPort",
+                    "validator": "!data.serialPort || (data.serialPort.startsWith('/') && !data.serialPort.includes(':'))",
+                    "validatorErrorText": "Use the name below /dev/serial/by-id"
+                },
+                "_checkPort": {
+                    "type": "sendTo",
+                    "xs": 12,
+                    "md": 4,
+                    "command": "checkPort",
+                    "jsonData": "{\"serialPort\": \"${data.serialPort}\"}",
+                    "label": "Check the port",
+                    "variant": "outlined",
+                    "icon": "search",
+                    "showProcess": true,
+                    "timeout": 10000
+                },
+                "baudRate": {
+                    "type": "select",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 4,
+                    "label": "Baud rate",
+                    "help": "help_baudRate",
+                    "options": [
+                        { "label": "115200", "value": 115200 },
+                        { "label": "230400", "value": 230400 },
+                        { "label": "460800", "value": 460800 },
+                        { "label": "921600", "value": 921600 },
+                        { "label": "1000000", "value": 1000000 }
+                    ]
+                },
+                "flowControl": {
+                    "type": "select",
+                    "xs": 12,
+                    "md": 4,
+                    "label": "Flow control",
+                    "help": "help_flowControl",
+                    "options": [
+                        { "label": "Off", "value": "" },
+                        { "label": "Hardware (RTS/CTS)", "value": "&uart-flow-control" }
+                    ]
+                }
+            }
+        },
+        "_docker": {
+            "type": "panel",
+            "label": "Docker",
+            "items": {
+                "dockerEnabled": {
+                    "type": "checkDocker",
+                    "xs": 12,
+                    "label": "Run the OpenThread Border Router in Docker (managed by this adapter)",
+                    "help": "help_docker"
+                },
+                "externalUrl": {
+                    "type": "text",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 8,
+                    "hidden": "data.dockerEnabled",
+                    "label": "REST API of an existing border router",
+                    "placeholder": "http://192.168.1.20:8081",
+                    "help": "help_externalUrl"
+                },
+                "infraInterface": {
+                    "type": "autocompleteSendTo",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data.dockerEnabled",
+                    "command": "listInterfaces",
+                    "freeSolo": true,
+                    "label": "Network interface of the LAN",
+                    "help": "help_infraInterface"
+                },
+                "prepareHost": {
+                    "type": "checkbox",
+                    "xs": 12,
+                    "md": 8,
+                    "hidden": "!data.dockerEnabled",
+                    "label": "Prepare the host (IPv6 forwarding, router advertisements)",
+                    "help": "help_prepareHost"
+                },
+                "dockerImage": {
+                    "type": "text",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data.dockerEnabled",
+                    "label": "Image",
+                    "placeholder": "openthread/border-router:v2026.11.0",
+                    "help": "help_image"
+                },
+                "dockerAutoImageUpdate": {
+                    "type": "checkbox",
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data.dockerEnabled || !data.dockerImage",
+                    "label": "Update the image automatically",
+                    "help": "help_autoUpdate"
+                },
+                "dockerStopOnUnload": {
+                    "type": "checkbox",
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data.dockerEnabled",
+                    "label": "Stop the container when the instance stops",
+                    "help": "help_stopOnUnload"
+                },
+                "restBind": {
+                    "type": "select",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data.dockerEnabled",
+                    "label": "REST API reachable from",
+                    "help": "help_restBind",
+                    "options": [
+                        { "label": "This host only (127.0.0.1)", "value": "127.0.0.1" },
+                        { "label": "Whole network, IPv4 (0.0.0.0)", "value": "0.0.0.0" },
+                        { "label": "Whole network, IPv4 and IPv6 (::)", "value": "::" }
+                    ]
+                },
+                "restPort": {
+                    "type": "number",
+                    "xs": 12,
+                    "md": 2,
+                    "hidden": "!data.dockerEnabled",
+                    "min": 1,
+                    "max": 65535,
+                    "label": "REST port",
+                    "help": "help_restPort"
+                },
+                "webBind": {
+                    "type": "select",
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data.dockerEnabled",
+                    "label": "Web interface of OTBR reachable from",
+                    "options": [
+                        { "label": "This host only (127.0.0.1)", "value": "127.0.0.1" },
+                        { "label": "Whole network, IPv4 (0.0.0.0)", "value": "0.0.0.0" },
+                        { "label": "Whole network, IPv4 and IPv6 (::)", "value": "::" }
+                    ]
+                },
+                "webPort": {
+                    "type": "number",
+                    "xs": 12,
+                    "md": 2,
+                    "hidden": "!data.dockerEnabled",
+                    "min": 1,
+                    "max": 65535,
+                    "label": "Web port"
+                },
+                "otLogLevel": {
+                    "type": "select",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data.dockerEnabled",
+                    "label": "Log level of otbr-agent",
+                    "options": [
+                        { "label": "critical", "value": 2 },
+                        { "label": "error", "value": 3 },
+                        { "label": "warning", "value": 4 },
+                        { "label": "notice", "value": 5 },
+                        { "label": "info", "value": 6 },
+                        { "label": "debug", "value": 7 }
+                    ]
+                }
+            }
+        },
+        "_network": {
+            "type": "panel",
+            "label": "Thread network",
+            "items": {
+                "autoCreateNetwork": {
+                    "type": "checkbox",
+                    "xs": 12,
+                    "label": "Create a Thread network automatically if the border router has none",
+                    "help": "help_autoCreate"
+                },
+                "networkName": {
+                    "type": "text",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 4,
+                    "maxLength": 16,
+                    "label": "Network name",
+                    "placeholder": "ioBroker-xxxx",
+                    "help": "help_networkName"
+                },
+                "channel": {
+                    "type": "select",
+                    "xs": 12,
+                    "md": 4,
+                    "label": "Channel",
+                    "help": "help_channel",
+                    "options": [
+                        { "label": "Automatic", "value": 0 },
+                        { "label": "11", "value": 11 },
+                        { "label": "12", "value": 12 },
+                        { "label": "13", "value": 13 },
+                        { "label": "14", "value": 14 },
+                        { "label": "15", "value": 15 },
+                        { "label": "16", "value": 16 },
+                        { "label": "17", "value": 17 },
+                        { "label": "18", "value": 18 },
+                        { "label": "19", "value": 19 },
+                        { "label": "20", "value": 20 },
+                        { "label": "21", "value": 21 },
+                        { "label": "22", "value": 22 },
+                        { "label": "23", "value": 23 },
+                        { "label": "24", "value": 24 },
+                        { "label": "25", "value": 25 },
+                        { "label": "26", "value": 26 }
+                    ]
+                },
+                "_createNetwork": {
+                    "type": "sendTo",
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "data.autoCreateNetwork",
+                    "command": "createNetwork",
+                    "jsonData": "{\"networkName\": \"${data.networkName}\", \"channel\": ${data.channel}}",
+                    "label": "Create the Thread network now",
+                    "variant": "contained",
+                    "icon": "add",
+                    "showProcess": true,
+                    "timeout": 30000
+                },
+                "pollInterval": {
+                    "type": "number",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 4,
+                    "min": 5,
+                    "max": 3600,
+                    "label": "Poll interval (seconds)"
+                }
+            }
+        },
+        "_matter": {
+            "type": "panel",
+            "label": "Matter",
+            "items": {
+                "_matterInfo": {
+                    "type": "staticText",
+                    "xs": 12,
+                    "text": "help_matter"
+                },
+                "matterInstance": {
+                    "type": "instance",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 4,
+                    "adapter": "matter",
+                    "allowDeactivate": true,
+                    "label": "Hand the Thread network to"
+                },
+                "_handOver": {
+                    "type": "sendTo",
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data.matterInstance",
+                    "command": "handOverToMatter",
+                    "jsonData": "{\"instance\": \"${data.matterInstance}\"}",
+                    "label": "Hand over now",
+                    "variant": "outlined",
+                    "icon": "send",
+                    "showProcess": true,
+                    "timeout": 30000
+                }
+            }
+        }
+    }
+}

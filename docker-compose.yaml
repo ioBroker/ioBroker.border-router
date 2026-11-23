@@ -1,0 +1,69 @@
+version: '3.9'
+
+services:
+    otbr:
+        # Official image of the OpenThread project (ot-br-posix: otbr-agent, REST API, web UI; s6-overlay on
+        # Ubuntu 24.04) for amd64, arm64 and arm/v7, released monthly as vYYYY.MM.0. It is pinned to the digest of
+        # one release: otbr-agent must fit the RCP firmware on the stick, so the image changes only with a new
+        # version of the adapter. (openthread/otbr is an older test image with another entrypoint.)
+        # native.dockerImage is missing on purpose: only a missing value takes this default, so an update of the
+        # adapter brings its image also to existing instances. A user can still enter another image there.
+        image: '${config.dockerImage:-openthread/border-router:v2026.11.0@sha256:5ae17855e42000abce4420098c3cc0f16d8b7cf3745ee091810afad75b37d1cc}'
+        container_name: otbr
+        labels:
+            - 'iobEnabled=${config.dockerEnabled:-false}'
+            # The Thread network must keep running when the instance stops: Matter devices depend on it
+            - 'iobStopOnUnload=${config.dockerStopOnUnload:-false}'
+            - 'iobAutoImageUpdate=${config.dockerAutoImageUpdate:-false}'
+            # restart the container if otbr-agent exits (e.g. the stick was unplugged for a moment)
+            - 'iobMonitoringEnabled=true'
+            # the adapter checks the serial port (set, exists, not used by another instance) and the network
+            # interface first and then lets the container start
+            - 'iobWaitForReady=true'
+            # the Thread network lives in this volume: dataset with the network key, SRP registrations
+            - 'iobBackup=otbr_data'
+        # otbr-agent creates wpan0, routes between it and the LAN, sends router advertisements and publishes
+        # services via mDNS: all of it has to happen on the host
+        network_mode: host
+        # ip6tables/ipset/tun for the border router, writable /proc/sys for the host preparation below
+        privileged: true
+        devices:
+            # docker resolves the symlink of /dev/serial/by-id/... when it creates the container
+            - '${config.serialPort}:/dev/ttyRCP'
+        environment:
+            # flowControl is either empty or '&uart-flow-control' (hardware flow control, RTS/CTS)
+            OT_RCP_DEVICE: 'spinel+hdlc+uart:///dev/ttyRCP?uart-baudrate=${config.baudRate:-460800}${config.flowControl:-}'
+            OT_INFRA_IF: '${config.infraInterface:-eth0}'
+            OT_THREAD_IF: 'wpan0'
+            OT_LOG_LEVEL: '${config.otLogLevel:-5}'
+            # 8081 is the default of OTBR, but also of ioBroker admin: the adapter uses its own port
+            OT_REST_LISTEN_ADDR: '${config.restBind:-127.0.0.1}'
+            OT_REST_LISTEN_PORT: '${config.restPort:-8091}'
+            OT_WEB_LISTEN_ADDR: '${config.webBind:-127.0.0.1}'
+            OT_WEB_LISTEN_PORT: '${config.webPort:-8092}'
+            OT_VENDOR_NAME: 'ioBroker'
+            OT_VENDOR_MODEL: 'Border Router'
+            IOB_PREPARE_HOST: '${config.prepareHost:-true}'
+        # A border router needs IPv6 forwarding and must accept router advertisements with route information on the
+        # LAN interface (what ot-br-posix/etc/docker/border-router/setup-host does). With host networking the
+        # privileged container writes these settings of the host; they are lost on reboot and set again on the next
+        # start of the container. /init (s6-overlay) has to stay PID 1, therefore `exec`.
+        # Variables in the script without braces: the docker plugin takes dollar-brace for its own templates.
+        entrypoint:
+            - /bin/bash
+            - -c
+            - >-
+                if [ "$IOB_PREPARE_HOST" = "true" ]; then
+                echo "ioBroker: enabling IPv6 forwarding and router advertisements on $OT_INFRA_IF";
+                echo 1 > /proc/sys/net/ipv6/conf/all/forwarding;
+                echo 1 > /proc/sys/net/ipv4/ip_forward;
+                echo 2 > "/proc/sys/net/ipv6/conf/$OT_INFRA_IF/accept_ra";
+                echo 64 > "/proc/sys/net/ipv6/conf/$OT_INFRA_IF/accept_ra_rt_info_max_plen";
+                fi;
+                exec /init
+        volumes:
+            - 'otbr_data:/data'
+        restart: unless-stopped
+
+volumes:
+    otbr_data:

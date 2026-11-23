@@ -1,0 +1,10 @@
+# No dot-directories except github/vscode
+.*/
+!.vscode/
+!.github/
+
+node_modules
+tmp/
+iobroker.*.tgz
+Thumbs.db
+.commitinfo

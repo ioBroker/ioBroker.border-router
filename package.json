@@ -1,0 +1,68 @@
+{
+  "name": "iobroker.border-router",
+  "version": "0.0.1",
+  "description": "OpenThread Border Router in Docker, managed from ioBroker: Thread network for Matter devices",
+  "author": "bluefox <dogafox@gmail.com>",
+  "contributors": [
+    "bluefox <dogafox@gmail.com>"
+  ],
+  "homepage": "https://github.com/ioBroker/ioBroker.border-router",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ioBroker/ioBroker.border-router"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "keywords": [
+    "ioBroker",
+    "thread",
+    "openthread",
+    "otbr",
+    "border router",
+    "matter",
+    "docker"
+  ],
+  "dependencies": {
+    "@iobroker/adapter-core": "^3.4.3",
+    "@iobroker/plugin-docker": "^1.4.0"
+  },
+  "devDependencies": {
+    "@alcalzone/release-script": "^5.2.1",
+    "@alcalzone/release-script-plugin-iobroker": "^5.2.0",
+    "@alcalzone/release-script-plugin-license": "^5.2.2",
+    "@iobroker/eslint-config": "^2.3.4",
+    "@iobroker/testing": "^6.3.2",
+    "@iobroker/types": "^7.2.5",
+    "@tsconfig/node22": "^22.0.7",
+    "@types/node": "^22.20.5",
+    "typescript": "~6.0.3"
+  },
+  "bugs": {
+    "url": "https://github.com/ioBroker/ioBroker.border-router/issues"
+  },
+  "main": "build/main.js",
+  "files": [
+    "admin/",
+    "build/",
+    "docker-compose.yaml",
+    "io-package.json",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint -c eslint.config.mjs",
+    "test:unit": "mocha --config test/mocharc.custom.json \"test/unit/*.test.js\" --exit",
+    "test:package": "mocha --config test/mocharc.custom.json test/package.js --exit",
+    "test:integration": "mocha --config test/mocharc.custom.json test/integration.js --exit",
+    "test": "npm run build && npm run test:unit && npm run test:package",
+    "prepublishOnly": "npm run build",
+    "release": "release-script",
+    "release-patch": "release-script patch --yes",
+    "release-minor": "release-script minor --yes",
+    "release-major": "release-script major --yes",
+    "update-packages": "npx -y npm-check-updates --upgrade"
+  },
+  "license": "MIT"
+}
