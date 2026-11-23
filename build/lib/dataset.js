@@ -9,6 +9,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isHex = isHex;
 exports.parseDataset = parseDataset;
+exports.isSameDataset = isSameDataset;
+exports.normalizeImportDataset = normalizeImportDataset;
 exports.roleName = roleName;
 exports.normalizeKeys = normalizeKeys;
 exports.parseNode = parseNode;
@@ -97,6 +99,76 @@ function parseDataset(hex) {
         }
     }
     return info;
+}
+/** Split a dataset into its TLVs: type → value (hex, upper case) */
+function datasetTlvs(hex) {
+    const bytes = Buffer.from(hex.trim(), 'hex');
+    const tlvs = new Map();
+    let pos = 0;
+    while (pos + 2 <= bytes.length) {
+        const type = bytes[pos];
+        const length = bytes[pos + 1];
+        tlvs.set(type, bytes
+            .subarray(pos + 2, pos + 2 + length)
+            .toString('hex')
+            .toUpperCase());
+        pos += 2 + length;
+    }
+    return tlvs;
+}
+/** Whether two datasets are equal, independent of the order of their TLVs and of the case */
+function isSameDataset(a, b) {
+    const cleanA = a.trim().toUpperCase();
+    const cleanB = b.trim().toUpperCase();
+    if (cleanA === cleanB) {
+        return true;
+    }
+    if (!isHex(cleanA) || !isHex(cleanB)) {
+        return false;
+    }
+    const tlvsA = datasetTlvs(cleanA);
+    const tlvsB = datasetTlvs(cleanB);
+    return tlvsA.size === tlvsB.size && [...tlvsA].every(([type, value]) => tlvsB.get(type) === value);
+}
+/**
+ * Check a dataset that is to be imported, e.g. copied from Home Assistant or another border router, and bring it
+ * into the form otbr-agent returns: upper case hex without white space. White space, line breaks and a leading
+ * `0x` are accepted. A border router can only join with a complete dataset.
+ *
+ * @param input the dataset as TLV hex string
+ */
+function normalizeImportDataset(input) {
+    const dataset = input.replace(/\s+/g, '').replace(/^0x/i, '').toUpperCase();
+    if (!dataset) {
+        throw new Error('The dataset is empty');
+    }
+    const info = parseDataset(dataset);
+    const missing = [];
+    if (!info.hasNetworkKey) {
+        missing.push('network key');
+    }
+    if (!info.networkName) {
+        missing.push('network name');
+    }
+    if (info.channel === undefined) {
+        missing.push('channel');
+    }
+    if (info.panId === undefined) {
+        missing.push('PAN ID');
+    }
+    if (info.extPanId?.length !== 16) {
+        missing.push('extended PAN ID');
+    }
+    if (!info.meshLocalPrefix) {
+        missing.push('mesh local prefix');
+    }
+    if (missing.length) {
+        throw new Error(`The dataset is incomplete, it has no ${missing.join(', ')}`);
+    }
+    if (!isValidChannel(info.channel)) {
+        throw new Error(`The dataset uses channel ${info.channel}, a border router supports 11 to 26`);
+    }
+    return { dataset, info };
 }
 /** Map the role of `/node` or `/node/state` (string, or a number on old builds) to a name */
 function roleName(state) {

@@ -42,6 +42,7 @@ const dataset_1 = require("./lib/dataset");
 const host_1 = require("./lib/host");
 const logHints_1 = require("./lib/logHints");
 const matter_1 = require("./lib/matter");
+const networks_1 = require("./lib/networks");
 const otbrClient_1 = require("./lib/otbrClient");
 /** Poll interval while the border router is not reachable yet (image pull, container start) */
 const FAST_POLL = 10_000;
@@ -80,7 +81,8 @@ class BorderRouterAdapter extends utils.Adapter {
     dataset = null;
     noDatasetLogged = false;
     autoEnableDone = false;
-    creatingNetwork = null;
+    /** a running creation or import of the Thread network: only one at a time */
+    networkTask = null;
     matterHandedOver = '';
     matterLastAttempt = 0;
     constructor(options = {}) {
@@ -430,28 +432,114 @@ class BorderRouterAdapter extends utils.Adapter {
     }
     async onNoDataset() {
         this.dataset = null;
+        if (this.networkTask) {
+            return;
+        }
         if (!this.config.autoCreateNetwork) {
             if (!this.noDatasetLogged) {
                 this.noDatasetLogged = true;
-                this.log.info('The border router has no Thread network yet. Create one in the settings (tab Thread network).');
+                this.log.info('The border router has no Thread network yet. Create one or use an existing one in the settings (tab Thread network).');
             }
             return;
         }
         try {
-            await this.createNetwork();
+            await this.exclusive(() => this.setUpNetwork());
         }
         catch (e) {
-            this.logErrorOnce(`Cannot create the Thread network: ${errorText(e)}`);
+            this.logErrorOnce(`Cannot set up the Thread network: ${errorText(e)}`);
         }
     }
-    /** Create a Thread network if the border router has none. Concurrent calls share one creation. */
-    createNetwork(networkName, channel) {
-        this.creatingNetwork ||= this.doCreateNetwork(networkName, channel).finally(() => {
-            this.creatingNetwork = null;
-        });
-        return this.creatingNetwork;
+    /** Run a change of the Thread network; a second change at the same time is refused */
+    async exclusive(task) {
+        if (this.networkTask) {
+            throw new Error('The Thread network is being changed already. Please wait a moment.');
+        }
+        const running = task();
+        this.networkTask = running;
+        try {
+            return await running;
+        }
+        finally {
+            this.networkTask = null;
+        }
     }
-    async doCreateNetwork(networkName, channel) {
+    /**
+     * The border router has no network: join the network that ioBroker.matter or another border router knows
+     * already, otherwise create a new one.
+     */
+    async setUpNetwork() {
+        if (this.config.joinExistingNetwork) {
+            const { network, networks } = (0, networks_1.chooseNetworkToJoin)(await this.findKnownNetworks());
+            if (network) {
+                this.log.info(`Using the known Thread network ${(0, networks_1.networkLabel)(network)} instead of creating a new one`);
+                await this.importNetwork(network.dataset, false);
+                return;
+            }
+            if (networks.length > 1) {
+                throw new Error(`${networks.length} Thread networks are known: ${networks.map(networks_1.networkLabel).join('; ')}. ` +
+                    'Select the one to use in the settings (tab Thread network) or create a new one there.');
+            }
+        }
+        await this.createNetwork();
+    }
+    /** The Thread networks of the matter instances and of the other border-router instances */
+    async findKnownNetworks() {
+        const matter = [];
+        const borderRouters = [];
+        for (const obj of await this.getInstances()) {
+            const instance = obj._id.replace(/^system\.adapter\./, '');
+            if (/^matter\.\d+$/.test(instance)) {
+                const controller = await this.getForeignObjectAsync(`${instance}.controller`);
+                if (controller?.native) {
+                    matter.push({ instance, native: controller.native });
+                }
+            }
+            else if (/^border-router\.\d+$/.test(instance) && instance !== this.namespace) {
+                if (!(await this.getForeignStateAsync(`system.adapter.${instance}.alive`))?.val) {
+                    continue;
+                }
+                try {
+                    const response = (await this.sendToAsync(instance, 'getDataset', {}, { timeout: 5000 }));
+                    if (response?.result?.dataset) {
+                        borderRouters.push({ instance, dataset: response.result.dataset });
+                    }
+                }
+                catch (e) {
+                    this.log.debug(`Cannot ask ${instance} for its Thread network: ${errorText(e)}`);
+                }
+            }
+        }
+        const fingerprint = (await this.getStateAsync('info.matterFingerprint'))?.val;
+        return (0, networks_1.collectKnownNetworks)(matter, borderRouters, this.namespace, typeof fingerprint === 'string' ? fingerprint : undefined);
+    }
+    /**
+     * Let the border router use an existing network.
+     *
+     * @param raw dataset as TLV hex
+     * @param replace whether a different network of this border router may be replaced
+     * @returns a text for the user
+     */
+    async importNetwork(raw, replace) {
+        const client = this.client;
+        if (!client) {
+            throw new Error('No border router configured');
+        }
+        const { dataset, info } = (0, dataset_1.normalizeImportDataset)(raw);
+        const result = await client.importActiveDataset(dataset, replace);
+        if (result === 'unchanged') {
+            return `The border router uses the Thread network "${info.networkName}" already`;
+        }
+        this.autoEnableDone = true;
+        this.requestPoll(2000);
+        const zigbee = (0, conflicts_1.zigbeeChannels)(await this.getInstances()).includes(info.channel)
+            ? ` Note: a Zigbee instance uses channel ${info.channel} too.`
+            : '';
+        const text = `${result === 'replaced' ? 'Replaced the Thread network by' : 'Joined the Thread network'} "${info.networkName}" (channel ${info.channel}, extended PAN ID ${info.extPanId}).${zigbee}`;
+        this.log.info(text);
+        return text;
+    }
+    /** Create a new Thread network with a random network key */
+    async createNetwork(networkName, channel) {
         const client = this.client;
         if (!client) {
             throw new Error('No border router configured');
@@ -586,8 +674,50 @@ class BorderRouterAdapter extends utils.Adapter {
                         reply({ error: 'The border router is not reachable' });
                         break;
                     }
-                    const created = await this.createNetwork(typeof message.networkName === 'string' ? message.networkName.trim() : undefined, toNumber(message.channel, 0) || undefined);
+                    const created = await this.exclusive(() => this.createNetwork(typeof message.networkName === 'string' ? message.networkName.trim() : undefined, toNumber(message.channel, 0) || undefined));
                     reply({ result: `Thread network "${created.networkName}" created on channel ${created.channel}` });
+                    break;
+                }
+                case 'listKnownNetworks': {
+                    // answer of selectSendTo: the network key stays in the adapter
+                    const networks = await this.findKnownNetworks();
+                    reply(networks.map(network => ({ value: network.key, label: (0, networks_1.networkLabel)(network) })));
+                    break;
+                }
+                case 'importDataset': {
+                    if (!this.reachable) {
+                        reply({ error: 'The border router is not reachable' });
+                        break;
+                    }
+                    // a checkbox that was never touched comes as "undefined"
+                    const replace = message.replace === true || message.replace === 'true';
+                    const source = textOf(message.source);
+                    const input = textOf(message.dataset);
+                    let dataset;
+                    if (source) {
+                        const network = (await this.findKnownNetworks()).find(n => n.key === source);
+                        if (!network) {
+                            reply({ error: `The Thread network of ${source} is not known (any more)` });
+                            break;
+                        }
+                        dataset = network.dataset;
+                    }
+                    else if (/^https?:\/\//i.test(input)) {
+                        const other = await new otbrClient_1.OtbrClient(input).getActiveDataset();
+                        if (!other) {
+                            reply({ error: `The border router at ${input} has no Thread network` });
+                            break;
+                        }
+                        dataset = other;
+                    }
+                    else if (input) {
+                        dataset = input;
+                    }
+                    else {
+                        reply({ error: 'Enter a dataset or select a known Thread network' });
+                        break;
+                    }
+                    reply({ result: await this.exclusive(() => this.importNetwork(dataset, replace)) });
                     break;
                 }
                 case 'handOverToMatter': {

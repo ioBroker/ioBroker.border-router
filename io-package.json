@@ -125,6 +125,7 @@
     "externalUrl": "",
     "pollInterval": 30,
     "autoCreateNetwork": true,
+    "joinExistingNetwork": true,
     "networkName": "",
     "channel": 0,
     "matterInstance": ""

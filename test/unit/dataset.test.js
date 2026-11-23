@@ -2,8 +2,10 @@ const assert = require('node:assert/strict');
 const {
     chooseChannel,
     defaultNetworkName,
+    isSameDataset,
     isValidChannel,
     isValidNetworkName,
+    normalizeImportDataset,
     parseDataset,
     parseNode,
     roleName,
@@ -135,5 +137,36 @@ describe('network parameters', () => {
     it('generates a network name', () => {
         assert.equal(defaultNetworkName('3FA2C1'), 'ioBroker-3fa2');
         assert.ok(isValidNetworkName(defaultNetworkName('ffff')));
+    });
+});
+
+describe('dataset import', () => {
+    it('accepts white space, line breaks, lower case and 0x', () => {
+        const pasted = `0x${DATASET.slice(0, 30).toLowerCase()}\n  ${DATASET.slice(30)} `;
+        const { dataset, info } = normalizeImportDataset(pasted);
+        assert.equal(dataset, DATASET);
+        assert.equal(info.networkName, 'ioBroker');
+        assert.equal(info.channel, 15);
+    });
+
+    it('refuses incomplete datasets', () => {
+        // without network key
+        const withoutKey = DATASET.replace('051000112233445566778899AABBCCDDEEFF', '');
+        assert.throws(() => normalizeImportDataset(withoutKey), /network key/);
+        assert.throws(() => normalizeImportDataset('0308696F42726F6B6572'), /network key, channel, PAN ID/);
+        assert.throws(() => normalizeImportDataset(' '), /empty/);
+        assert.throws(() => normalizeImportDataset('xyz'), /hex/);
+    });
+
+    it('refuses channels a border router does not support', () => {
+        assert.throws(() => normalizeImportDataset(DATASET.replace('000300000F', '000300000A')), /channel 10/);
+    });
+
+    it('compares datasets independent of the TLV order and the case', () => {
+        const reordered = DATASET.slice(20) + DATASET.slice(0, 20);
+        assert.ok(isSameDataset(DATASET, reordered.toLowerCase()));
+        assert.ok(!isSameDataset(DATASET, DATASET.replace('01021234', '01021235')));
+        assert.ok(!isSameDataset(DATASET, DATASET.replace('01021234', '')));
+        assert.ok(!isSameDataset(DATASET, 'xyz'));
     });
 });

@@ -53,8 +53,9 @@ adapter. Another image can be entered in the settings (tab Docker); only then th
    "Check the port".
 3. Save. The adapter detects the network interface of the LAN, pulls the image `openthread/border-router` and starts the
    container `iob_border_router_0_otbr`.
-4. On the first start the adapter creates a Thread network (random network key, channel 25, 15 or 20 - not the channel
-   of a Zigbee instance) and starts it.
+4. On the first start the adapter uses the Thread network that ioBroker.matter or another border-router instance knows
+   already (see below). If there is none, it creates a Thread network (random network key, channel 25, 15 or 20 - not
+   the channel of a Zigbee instance) and starts it.
 5. Select your matter instance in the tab "Matter": the network credentials (dataset) are handed to its controller.
    Then add Thread devices in ioBroker.matter as usual (Bluetooth is needed for commissioning).
 
@@ -83,10 +84,16 @@ The data of the border router (dataset with the network key, SRP registrations) 
 
 | Port | Default             | Purpose                                                                    |
 |------|---------------------|----------------------------------------------------------------------------|
-| 8091 | `127.0.0.1` only    | REST API of `otbr-agent` (OTBR uses 8081 by default, which is ioBroker admin) |
-| 8092 | `127.0.0.1` only    | Web interface of OTBR                                                      |
+| 8091 | off (`127.0.0.1`)   | REST API of `otbr-agent` (OTBR uses 8081 by default, which is ioBroker admin) |
+| 8092 | off (`127.0.0.1`)   | Web interface of OTBR                                                      |
 
-The REST API has no authentication and returns the network key. Open it to the network only if another system needs it.
+Both can be opened to the network in the settings (tab Docker, "REST API in the network"), e.g. for Home Assistant or
+ioBroker.matter on another host. ioBroker.matter finds border routers via mDNS and looks for their REST API on port
+**8081** only: with the default port 8091 it does not find this one (it gets the dataset by the hand-over instead), and
+8081 is free only if ioBroker admin does not use it on this host.
+
+The REST API has no authentication, returns the network key and can change the network. Open it only in a trusted
+network.
 
 ## States
 
@@ -109,6 +116,8 @@ The network key is not written into any state.
 |--------------------|----------------------------------|-----------------------------------------------------------|
 | `getDataset`       | -                                | `{ result: { dataset, networkName, channel, panId, extPanId, meshLocalPrefix } }` - contains the network key! |
 | `createNetwork`    | `{ networkName?, channel? }`     | only if the border router has no network yet              |
+| `importDataset`    | `{ dataset }`, `{ dataset: 'http://...:8081' }` or `{ source }`, each with `replace?` | use an existing network: dataset (hex), REST API of another border router or a key of `listKnownNetworks` |
+| `listKnownNetworks` | -                               | `[{ value, label }]`: networks of matter and of other border-router instances (without key) |
 | `handOverToMatter` | `{ instance: 'matter.0' }`       | puts the dataset into the controller settings of ioBroker.matter |
 | `checkPort`        | `{ serialPort }`                 | stick recognized, port used by another instance?          |
 | `listSerialPorts`, `listInterfaces` | -               | lists for the settings dialog                             |
@@ -116,6 +125,24 @@ The network key is not written into any state.
 ```js
 sendTo('border-router.0', 'getDataset', {}, res => log(res.result.dataset));
 ```
+
+## Using an existing Thread network
+
+A border router can join an existing Thread network instead of creating its own one, e.g. the network of Home
+Assistant, Apple or Google. Then the devices of that network can use this border router too, and all Matter devices
+are in one network.
+
+- **Automatically on the first start** ("Use a Thread network known by ioBroker.matter or another border router", on by
+  default): if the border router has no network yet, the adapter looks into the controller settings of the matter
+  instances (default Thread network and additional Thread credentials) and asks the other border-router instances.
+  It uses its own former network (e.g. after the Docker volume was lost), otherwise the only known network. If several
+  networks are known, it creates none and asks in the log to choose one.
+- **In the settings** (tab Thread network, "Use an existing Thread network"): select one of the known networks, paste a
+  dataset (hex, as exported by the other system) or enter the URL of the REST API of another OpenThread border router
+  (e.g. `http://192.168.1.20:8081`). An existing network of this border router is only replaced with "Replace the
+  current Thread network" - its devices lose the connection then.
+
+To take a dataset, otbr-agent stops Thread for a moment and starts it again.
 
 ## Hand-over to ioBroker.matter
 
@@ -137,6 +164,11 @@ credentials under the ID `border-router.0`.
 -->
 
 ## Changelog
+### **WORK IN PROGRESS**
+- (@GermanBluefox) Use an existing Thread network: import a dataset, take it from the REST API of another border router or choose one of the networks known by ioBroker.matter and other border-router instances
+- (@GermanBluefox) On the first start the border router joins the Thread network known by ioBroker.matter or another border-router instance instead of creating a new one
+- (@GermanBluefox) The settings for opening the REST API and the web interface to the network are clearer (off by default)
+
 ### 0.0.2 (2026-11-23)
 - (@GermanBluefox) The package is published by GitHub Actions with npm provenance
 

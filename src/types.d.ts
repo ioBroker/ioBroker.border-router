@@ -27,6 +27,7 @@ declare global {
             /** seconds */
             pollInterval: number;
             autoCreateNetwork: boolean;
+            joinExistingNetwork: boolean;
             networkName: string;
             /** 0 = choose automatically */
             channel: number;

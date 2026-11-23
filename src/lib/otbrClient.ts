@@ -1,4 +1,4 @@
-import { isHex, parseNode, type NodeInfo } from './dataset';
+import { isHex, isSameDataset, parseDataset, parseNode, type NodeInfo } from './dataset';
 
 /** Error of a request to the REST API of otbr-agent; `status` is 0 if the server could not be reached */
 export class OtbrError extends Error {
@@ -134,6 +134,51 @@ export class OtbrClient {
             await this.putDataset(pascal);
         }
         return true;
+    }
+
+    /**
+     * Use an existing dataset (TLV hex), e.g. to join the Thread network of another border router.
+     *
+     * otbr-agent takes an active dataset only while Thread is stopped (409 otherwise): a running network is
+     * stopped for it, and started again also if the dataset is refused.
+     *
+     * @param dataset complete operational dataset, upper case hex
+     * @param replace whether an existing, different network of this border router may be replaced
+     * @returns `unchanged` if the border router uses this dataset already
+     */
+    public async importActiveDataset(
+        dataset: string,
+        replace: boolean,
+    ): Promise<'unchanged' | 'imported' | 'replaced'> {
+        const current = await this.getActiveDataset();
+        if (current && isSameDataset(current, dataset)) {
+            return 'unchanged';
+        }
+        if (current && !replace) {
+            throw new OtbrError(
+                `The border router has the Thread network "${parseDataset(current).networkName}" already. Allow to replace it.`,
+                412,
+            );
+        }
+        const running = (await this.getNode()).role !== 'disabled';
+        if (running) {
+            await this.setThreadEnabled(false);
+        }
+        try {
+            // the exact content type "text/plain" selects the TLV format, fetch would add a charset
+            await this.request('PUT', '/node/dataset/active', { body: dataset, contentType: 'text/plain' });
+        } catch (e) {
+            if (running) {
+                await this.setThreadEnabled(true).catch(() => undefined);
+            }
+            throw e;
+        }
+        await this.setThreadEnabled(true);
+        const now = await this.getActiveDataset();
+        if (!now || parseDataset(now).extPanId !== parseDataset(dataset).extPanId) {
+            throw new OtbrError('The border router did not take the dataset', 500);
+        }
+        return current ? 'replaced' : 'imported';
     }
 
     private async putDataset(body: Record<string, unknown>): Promise<void> {

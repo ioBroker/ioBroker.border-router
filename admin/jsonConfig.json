@@ -134,12 +134,12 @@
                     "xs": 12,
                     "md": 4,
                     "hidden": "!data.dockerEnabled",
-                    "label": "REST API reachable from",
+                    "label": "REST API in the network",
                     "help": "help_restBind",
                     "options": [
-                        { "label": "This host only (127.0.0.1)", "value": "127.0.0.1" },
-                        { "label": "Whole network, IPv4 (0.0.0.0)", "value": "0.0.0.0" },
-                        { "label": "Whole network, IPv4 and IPv6 (::)", "value": "::" }
+                        { "label": "Off - only this host (127.0.0.1)", "value": "127.0.0.1" },
+                        { "label": "On - IPv4 (0.0.0.0)", "value": "0.0.0.0" },
+                        { "label": "On - IPv4 and IPv6 (::)", "value": "::" }
                     ]
                 },
                 "restPort": {
@@ -157,11 +157,11 @@
                     "xs": 12,
                     "md": 4,
                     "hidden": "!data.dockerEnabled",
-                    "label": "Web interface of OTBR reachable from",
+                    "label": "Web interface of OTBR in the network",
                     "options": [
-                        { "label": "This host only (127.0.0.1)", "value": "127.0.0.1" },
-                        { "label": "Whole network, IPv4 (0.0.0.0)", "value": "0.0.0.0" },
-                        { "label": "Whole network, IPv4 and IPv6 (::)", "value": "::" }
+                        { "label": "Off - only this host (127.0.0.1)", "value": "127.0.0.1" },
+                        { "label": "On - IPv4 (0.0.0.0)", "value": "0.0.0.0" },
+                        { "label": "On - IPv4 and IPv6 (::)", "value": "::" }
                     ]
                 },
                 "webPort": {
@@ -200,6 +200,14 @@
                     "xs": 12,
                     "label": "Create a Thread network automatically if the border router has none",
                     "help": "help_autoCreate"
+                },
+                "joinExistingNetwork": {
+                    "type": "checkbox",
+                    "newLine": true,
+                    "xs": 12,
+                    "hidden": "!data.autoCreateNetwork",
+                    "label": "Use a Thread network known by ioBroker.matter or another border router instead of creating a new one",
+                    "help": "help_joinExisting"
                 },
                 "networkName": {
                     "type": "text",
@@ -249,6 +257,81 @@
                     "icon": "add",
                     "showProcess": true,
                     "timeout": 30000
+                },
+                "_importHeader": {
+                    "type": "header",
+                    "newLine": true,
+                    "size": 5,
+                    "text": "Use an existing Thread network"
+                },
+                "_importInfo": {
+                    "type": "staticText",
+                    "xs": 12,
+                    "text": "help_import"
+                },
+                "_knownNetwork": {
+                    "type": "selectSendTo",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 8,
+                    "command": "listKnownNetworks",
+                    "noTranslation": true,
+                    "label": "Known Thread networks"
+                },
+                "_useKnown": {
+                    "type": "sendTo",
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data._knownNetwork",
+                    "command": "importDataset",
+                    "jsonData": "{\"source\": \"${data._knownNetwork}\", \"replace\": \"${data._importReplace}\"}",
+                    "label": "Use this network",
+                    "variant": "contained",
+                    "showProcess": true,
+                    "timeout": 60000,
+                    "confirm": {
+                        "condition": "data._importReplace",
+                        "title": "confirm_replace_title",
+                        "text": "confirm_replace_text",
+                        "ok": "Replace",
+                        "cancel": "Cancel",
+                        "type": "warning"
+                    }
+                },
+                "_importDataset": {
+                    "type": "text",
+                    "newLine": true,
+                    "xs": 12,
+                    "md": 8,
+                    "label": "Dataset (hex) or URL of the REST API of another border router",
+                    "placeholder": "0E080000000000010000000300000F...  /  http://192.168.1.20:8081"
+                },
+                "_import": {
+                    "type": "sendTo",
+                    "xs": 12,
+                    "md": 4,
+                    "hidden": "!data._importDataset",
+                    "command": "importDataset",
+                    "jsonData": "{\"dataset\": \"${data._importDataset}\", \"replace\": \"${data._importReplace}\"}",
+                    "label": "Import",
+                    "variant": "contained",
+                    "showProcess": true,
+                    "timeout": 60000,
+                    "confirm": {
+                        "condition": "data._importReplace",
+                        "title": "confirm_replace_title",
+                        "text": "confirm_replace_text",
+                        "ok": "Replace",
+                        "cancel": "Cancel",
+                        "type": "warning"
+                    }
+                },
+                "_importReplace": {
+                    "type": "checkbox",
+                    "newLine": true,
+                    "xs": 12,
+                    "label": "Replace the current Thread network of this border router",
+                    "help": "help_importReplace"
                 },
                 "pollInterval": {
                     "type": "number",

@@ -116,6 +116,45 @@ class OtbrClient {
         }
         return true;
     }
+    /**
+     * Use an existing dataset (TLV hex), e.g. to join the Thread network of another border router.
+     *
+     * otbr-agent takes an active dataset only while Thread is stopped (409 otherwise): a running network is
+     * stopped for it, and started again also if the dataset is refused.
+     *
+     * @param dataset complete operational dataset, upper case hex
+     * @param replace whether an existing, different network of this border router may be replaced
+     * @returns `unchanged` if the border router uses this dataset already
+     */
+    async importActiveDataset(dataset, replace) {
+        const current = await this.getActiveDataset();
+        if (current && (0, dataset_1.isSameDataset)(current, dataset)) {
+            return 'unchanged';
+        }
+        if (current && !replace) {
+            throw new OtbrError(`The border router has the Thread network "${(0, dataset_1.parseDataset)(current).networkName}" already. Allow to replace it.`, 412);
+        }
+        const running = (await this.getNode()).role !== 'disabled';
+        if (running) {
+            await this.setThreadEnabled(false);
+        }
+        try {
+            // the exact content type "text/plain" selects the TLV format, fetch would add a charset
+            await this.request('PUT', '/node/dataset/active', { body: dataset, contentType: 'text/plain' });
+        }
+        catch (e) {
+            if (running) {
+                await this.setThreadEnabled(true).catch(() => undefined);
+            }
+            throw e;
+        }
+        await this.setThreadEnabled(true);
+        const now = await this.getActiveDataset();
+        if (!now || (0, dataset_1.parseDataset)(now).extPanId !== (0, dataset_1.parseDataset)(dataset).extPanId) {
+            throw new OtbrError('The border router did not take the dataset', 500);
+        }
+        return current ? 'replaced' : 'imported';
+    }
     async putDataset(body) {
         await this.request('PUT', '/node/dataset/active', {
             body: JSON.stringify(body),

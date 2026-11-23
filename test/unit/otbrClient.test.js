@@ -107,3 +107,110 @@ describe('OtbrClient', () => {
         await assert.rejects(client.getNode(), e => e instanceof OtbrError && e.unreachable);
     });
 });
+
+/** Complete datasets of two networks, like otbr-agent creates them */
+function fullDataset(extPanId, name) {
+    return [
+        '0E080000000000010000',
+        '000300000F',
+        '35060004001FFFE0',
+        `0208${extPanId}`,
+        '0708FD11223344556677',
+        '051000112233445566778899AABBCCDDEEFF',
+        `03${Buffer.byteLength(name).toString(16).padStart(2, '0')}${Buffer.from(name).toString('hex')}`.toUpperCase(),
+        '01021234',
+        '0410445F2B5CA6F2A93A55CE570A70EFEECB',
+        '0C0402A0F7F8',
+    ].join('');
+}
+const NETWORK_A = fullDataset('1122334455667788', 'ioBroker');
+const NETWORK_B = fullDataset('AABBCCDDEEFF0011', 'Home');
+
+/** A fake otbr-agent with state: like the real one it takes an active dataset only while Thread is disabled */
+function statefulServer(state) {
+    return startServer({
+        'GET /node': () => [200, 'application/json', JSON.stringify({ state: state.role })],
+        'GET /node/dataset/active': () => (state.dataset ? [200, 'text/plain', state.dataset] : [204]),
+        'PUT /node/state': body => {
+            state.role = JSON.parse(body) === 'enable' ? 'leader' : 'disabled';
+            return [200];
+        },
+        'PUT /node/dataset/active': body => {
+            if (state.role !== 'disabled') {
+                return [409, 'application/json', '{"ErrorCode":409}'];
+            }
+            if (state.refuse) {
+                return [400, 'application/json', '{"ErrorCode":400}'];
+            }
+            const created = !state.dataset;
+            state.dataset = body;
+            return [created ? 201 : 200];
+        },
+    });
+}
+
+describe('OtbrClient.importActiveDataset', () => {
+    let fake;
+    afterEach(() => {
+        fake?.server.close();
+        fake = undefined;
+    });
+
+    const calls = () => fake.requests.filter(r => r.method === 'PUT').map(r => `${r.url} ${r.body.slice(0, 12)}`);
+
+    it('sets the dataset as TLV hex with the exact content type text/plain and starts Thread', async () => {
+        const state = { role: 'disabled', dataset: null };
+        fake = await statefulServer(state);
+        const client = new OtbrClient(`http://127.0.0.1:${fake.port}`);
+        assert.equal(await client.importActiveDataset(NETWORK_A, false), 'imported');
+        const put = fake.requests.find(r => r.method === 'PUT' && r.url === '/node/dataset/active');
+        assert.equal(put.headers['content-type'], 'text/plain');
+        assert.equal(put.body, NETWORK_A);
+        assert.equal(state.role, 'leader');
+        assert.deepEqual(calls(), [`/node/dataset/active ${NETWORK_A.slice(0, 12)}`, '/node/state "enable"']);
+    });
+
+    it('does nothing if the border router uses the dataset already, also in another TLV order', async () => {
+        const state = { role: 'leader', dataset: NETWORK_A };
+        fake = await statefulServer(state);
+        const client = new OtbrClient(`http://127.0.0.1:${fake.port}`);
+        const reordered = NETWORK_A.slice(20) + NETWORK_A.slice(0, 20);
+        assert.equal(await client.importActiveDataset(reordered.toLowerCase(), false), 'unchanged');
+        assert.deepEqual(calls(), []);
+    });
+
+    it('does not replace another network without permission', async () => {
+        const state = { role: 'leader', dataset: NETWORK_A };
+        fake = await statefulServer(state);
+        const client = new OtbrClient(`http://127.0.0.1:${fake.port}`);
+        await assert.rejects(
+            client.importActiveDataset(NETWORK_B, false),
+            e => e instanceof OtbrError && e.status === 412 && /ioBroker/.test(e.message),
+        );
+        assert.deepEqual(calls(), []);
+        assert.equal(state.dataset, NETWORK_A);
+    });
+
+    it('stops a running network to replace it and starts the new one', async () => {
+        const state = { role: 'leader', dataset: NETWORK_A };
+        fake = await statefulServer(state);
+        const client = new OtbrClient(`http://127.0.0.1:${fake.port}`);
+        assert.equal(await client.importActiveDataset(NETWORK_B, true), 'replaced');
+        assert.equal(state.dataset, NETWORK_B);
+        assert.equal(state.role, 'leader');
+        assert.deepEqual(calls(), [
+            '/node/state "disable"',
+            `/node/dataset/active ${NETWORK_B.slice(0, 12)}`,
+            '/node/state "enable"',
+        ]);
+    });
+
+    it('starts the former network again if the dataset is refused', async () => {
+        const state = { role: 'leader', dataset: NETWORK_A, refuse: true };
+        fake = await statefulServer(state);
+        const client = new OtbrClient(`http://127.0.0.1:${fake.port}`);
+        await assert.rejects(client.importActiveDataset(NETWORK_B, true), e => e.status === 400);
+        assert.equal(state.dataset, NETWORK_A);
+        assert.equal(state.role, 'leader');
+    });
+});
