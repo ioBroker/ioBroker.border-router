@@ -164,7 +164,7 @@ credentials under the ID `border-router.0`.
 -->
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.1.0 (2026-11-23)
 - (@GermanBluefox) Use an existing Thread network: import a dataset, take it from the REST API of another border router or choose one of the networks known by ioBroker.matter and other border-router instances
 - (@GermanBluefox) On the first start the border router joins the Thread network known by ioBroker.matter or another border-router instance instead of creating a new one
 - (@GermanBluefox) The settings for opening the REST API and the web interface to the network are clearer (off by default)
